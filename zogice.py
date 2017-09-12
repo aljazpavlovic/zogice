@@ -75,7 +75,7 @@ def cakaj(sekunde):
 
 
 def krog(x, y, r, barva=nakljucna_barva(), sirina=1):
-    ustvari_krog = widget.scene.addEllipse(-r, -r, 2*r, 2*r, QPen(QBrush(barva), sirina))
+    ustvari_krog = widget.scene.addEllipse(-r, -r, 2 * r, 2 * r, QPen(QBrush(barva), sirina))
     ustvari_krog.setPos(x, y)
     if obnavljaj:
         obnovi()
@@ -89,7 +89,7 @@ def konec():
 levo = desno = False
 
 
-class Zoga:
+class klas_zogica:
     def __init__(self):
         self.barva = nakljucna_barva()
         self.x = random.randint(30, maxX - 30)
@@ -180,7 +180,7 @@ class Zoga:
                     break
 
 
-class Miska(Zoga):
+class klas_miska(klas_zogica):
     def __init__(self):
         self.x = 2000
         self.y = 2000
@@ -218,15 +218,16 @@ class Miska(Zoga):
                 self.status = 2
 
 
-kurzor = Miska()
+kurzor = klas_miska()
 zoge = []
 seznam_zog = []
 for i in range(50):
-    zoge.append(Zoga())
+    zoge.append(klas_zogica())
     zoge[i].skrij_se()
     seznam_zog.append(0)
 nivo = 1
 delez = 0.1
+pokaze_navodila = True
 while nivo < 11:
     klik = False
     st_zog = 15 + (nivo * 3)
@@ -236,8 +237,14 @@ while nivo < 11:
         seznam_zog[i] = zoge[i].status
         zoge[i].reset()
     kurzor.reset()
-    al_ja_al_ne = 1
-    QMessageBox.information(None, "NIVO {}".format(nivo), "Poči vsaj {} od {} žog".format(int(st_zog * delez), st_zog))
+    stevilo_zahtevanih = int(st_zog * delez)
+    al_ja_al_ne = True
+    if pokaze_navodila:
+        QMessageBox.information(None, "NAVODILA", "Klikni na žogico, da poči. Počena žogica bo počila ostale žogice, "
+                                                  "ki se je dotaknejo. Poči zadosti žogic za napredovanje v višji "
+                                                  "nivo.")
+        pokaze_navodila = False
+    QMessageBox.information(None, "NIVO {}".format(nivo), "Poči vsaj {} od {} žog.".format(stevilo_zahtevanih, st_zog))
     for i in range(st_zog):
         zoge[i].narisi_se()
     while al_ja_al_ne:
@@ -249,7 +256,7 @@ while nivo < 11:
                 else:
                     for i in range(50):
                         zoge[i].skrij_se()
-                    al_ja_al_ne = 0
+                    al_ja_al_ne = False
             else:
                 zoge[j].preveri_vse_razdalje_do_zog(zoge)
         cakaj(0.02)
@@ -257,10 +264,13 @@ while nivo < 11:
     for i in range(st_zog):
         zoge[i].status = -1
     if kurzor.stevilo_pocenih >= int(st_zog * delez):
-        QMessageBox.information(None, "BRAVO", "Počil si {} od {} žog".format(int(st_zog * delez), st_zog))
-        al_ja_al_ne = 1
+        QMessageBox.information(None, "BRAVO", "Počil si {} od {} žog.".format(kurzor.stevilo_pocenih, st_zog))
+        al_ja_al_ne = True
         nivo += 1
         delez += 0.1
     else:
-        QMessageBox.information(None, "NEUSPEH", "Počil si le {} od {} žog".format(kurzor.stevilo_pocenih, st_zog))
+        QMessageBox.information(None, "NEUSPEH",
+                                "Počil si le {} od {} žog, potreboval pa si jih vsaj {}.".format(kurzor.stevilo_pocenih,
+                                                                                                 st_zog,
+                                                                                                 stevilo_zahtevanih))
 konec()
