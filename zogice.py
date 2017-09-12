@@ -74,12 +74,12 @@ def cakaj(sekunde):
     time.sleep(sekunde)
 
 
-def krog(x, y, r, barva=nakljucna_barva(), sirina=1):
-    ustvari_krog = widget.scene.addEllipse(-r, -r, 2 * r, 2 * r, QPen(QBrush(barva), sirina))
-    ustvari_krog.setPos(x, y)
+def ustvari_krog(x, y, r, barva=nakljucna_barva(), sirina=1):
+    krog = widget.scene.addEllipse(-r, -r, 2 * r, 2 * r, QPen(QBrush(barva), sirina))
+    krog.setPos(x, y)
     if obnavljaj:
         obnovi()
-    return ustvari_krog
+    return krog
 
 
 def konec():
@@ -88,7 +88,7 @@ def konec():
 
 levo = desno = False
 
-
+#statusi: -1=skrita, 0=obstaja, 1=pocena, 2=bla pocena
 class klas_zogica:
     def __init__(self):
         self.barva = nakljucna_barva()
@@ -97,13 +97,13 @@ class klas_zogica:
         self.kot = random.randint(0, 360)
         self.hitrost = random.randint(50, 150)
         self.radij = 10
-        self.zacetni_cas = 0
+        self.trajane_pocenosti = 0
         self.status = 0
         self.narisi_se()
         self.skrij_se()
 
     def narisi_se(self):
-        self.body = krog(self.x, self.y, self.radij, self.barva, 2)
+        self.body = ustvari_krog(self.x, self.y, self.radij, self.barva, 2)
         if self.status == -1:
             self.body.show()
         self.status = 0
@@ -119,13 +119,9 @@ class klas_zogica:
         self.body.setPos(self.x, self.y)
 
     def spremeni_kot(self):
-        if 0 <= self.kot < 90:
+        if 0 <= self.kot < 90 or 180 <= self.kot < 270:
             self.kot = 180 - self.kot
-        elif 90 <= self.kot < 180:
-            self.kot = -self.kot
-        elif 180 <= self.kot < 270:
-            self.kot = 180 - self.kot
-        elif 270 <= self.kot <= 360:
+        elif 90 <= self.kot < 180 or 270 <= self.kot <= 360:
             self.kot = -self.kot
         else:
             if self.kot < 0:
@@ -134,7 +130,7 @@ class klas_zogica:
                 self.kot -= 360
             self.spremeni_kot()
 
-    def ce_pride_do_roba(self):
+    def ko_pride_do_roba(self):
         if self.x <= 0 or self.y <= 0 or self.y >= maxY or self.x >= maxX:
             self.spremeni_kot()
         if self.razdalja_do(kurzor.x, kurzor.y) < 40:
@@ -148,7 +144,7 @@ class klas_zogica:
             self.body.setPos(self.x, self.y)
         if self.status == -1:
             self.skrij_se()
-        if self.status == 1 and self.zacetni_cas < 0:
+        if self.status == 1 and self.trajane_pocenosti < 0:
             self.skrij_se()
             self.status = 2
 
@@ -156,12 +152,10 @@ class klas_zogica:
         if self.status == 0:
             self.status = 1
             self.radij = 30
-            self.zacetni_cas = 2
+            self.trajane_pocenosti = 2
             self.body.hide()
-            self.body = krog(self.x, self.y, self.radij, self.barva, 2)
-            pobarvamo_zogico = self.body.pen().color().lighter()
-            pobarvamo_zogico.setAlpha(192)
-            self.body.setBrush(pobarvamo_zogico)
+            self.body = ustvari_krog(self.x, self.y, self.radij, self.barva, 2)
+            self.body.setBrush(self.body.pen().color().lighter())
             self.hitrost = 0
             kurzor.stevilo_pocenih += 1
 
@@ -171,9 +165,9 @@ class klas_zogica:
     def preveri_vse_razdalje_do_zog(self, zogica):
         self.update()
         if self.status == 1:
-            self.zacetni_cas -= 0.02
+            self.trajane_pocenosti -= 0.02
         elif self.status == 0:
-            self.ce_pride_do_roba()
+            self.ko_pride_do_roba()
             for k in range(30):
                 if zogica[k].status == 1 and self.razdalja_do(zogica[k].x, zogica[k].y) < 40:
                     self.pobarvaj_se()
@@ -185,14 +179,14 @@ class klas_miska(klas_zogica):
         self.x = 2000
         self.y = 2000
         self.status = 0
-        self.zacetni_cas = 0
+        self.trajane_pocenosti = 0
         self.stevilo_pocenih = -1
         self.barva = nakljucna_barva()
-        self.body = krog(self.x, self.y, 30, self.barva, 2)
+        self.body = ustvari_krog(self.x, self.y, 30, self.barva, 2)
 
     def reset(self):
         self.body.hide()
-        self.body = krog(self.x, self.y, 30, self.barva, 2)
+        self.body = ustvari_krog(self.x, self.y, 30, self.barva, 2)
         self.update()
         kurzor.status = 0
         self.body.show()
@@ -204,13 +198,13 @@ class klas_miska(klas_zogica):
         if not klik:
             self.body.setPos(miska[0], miska[1])
         elif self.status == 0:
-            self.zacetni_cas = 3
+            self.trajane_pocenosti = 3
             self.x = miska[0]
             self.y = miska[1]
             self.pobarvaj_se()
         elif self.status == 1:
-            if self.zacetni_cas > 0:
-                self.zacetni_cas -= 0.02
+            if self.trajane_pocenosti > 0:
+                self.trajane_pocenosti -= 0.02
             else:
                 self.body.hide()
                 self.x = 2000
